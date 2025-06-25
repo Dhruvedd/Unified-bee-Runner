@@ -4,26 +4,19 @@ Convert one or more WebDataset .tar files into flat .bin files.
 This script strips the long "<key>.0.png" names down to "0.png", "1.png", ...
 then packages them via dataloaderToFlatbin().
 """
-
 import argparse
-import webdataset as wds
-import torch
-import sys
 import os
+import sys
+
+import torch
+import webdataset as wds
+from flatbin_dataset import dataloaderToFlatbin
+from flatbin_dataset import getPatchDatatypes
+from flatbin_dataset import getPatchHeaderNames
 
 # adjust this to wherever your flatbin_dataset lives
-sys.path.append("/research/projects/grail/ajs787/target/2025-06-06_2025-06-09/Unified-bee-Runner/bee-analysis/utility")
-
-from flatbin_dataset import (
-    dataloaderToFlatbin,
-    getPatchHeaderNames,
-    getPatchDatatypes
-)
-
-from flatbin_dataset import (
-    dataloaderToFlatbin,
-    getPatchHeaderNames,
-    getPatchDatatypes
+sys.path.append(
+    "/research/projects/grail/ajs787/target/2025-06-06_2025-06-09/Unified-bee-Runner/bee-analysis/utility"
 )
 
 
@@ -52,11 +45,7 @@ def strip_prefix(sample):
 
 def getImageInfo(tar_list):
     image_info = getPatchHeaderNames()
-    ds = (
-        wds.WebDataset(tar_list)
-           .map(strip_prefix)
-           .to_tuple(*image_info)
-    )
+    ds = wds.WebDataset(tar_list).map(strip_prefix).to_tuple(*image_info)
     example = next(iter(ds))
     datatypes = getPatchDatatypes()
     return {
@@ -65,51 +54,64 @@ def getImageInfo(tar_list):
     }
 
 
-def convertWebdataset(dataset, entries, output, shuffle, shardshuffle, overrides):
+def convertWebdataset(dataset, entries, output, shuffle, shardshuffle,
+                      overrides):
     patch_info = {}
 
     # Build pipeline: use single-arg handlers because this WebDataset version
     loader = (
-        wds.WebDataset(dataset)
-           .shuffle(shuffle)
-           # .shardshuffle(shardshuffle)  # unsupported
-           .decode(
-               wds.handle_extension("cls",   lambda data: data),
-               wds.handle_extension("png",   lambda data: data),
-               wds.handle_extension("txt",   lambda data: data),
-               wds.handle_extension("numpy", lambda data: data),
-           )
-           .map(strip_prefix)
-           .to_tuple(*entries)
-    )
+        wds.WebDataset(dataset).shuffle(shuffle)
+        # .shardshuffle(shardshuffle)  # unsupported
+        .decode(
+            wds.handle_extension("cls", lambda data: data),
+            wds.handle_extension("png", lambda data: data),
+            wds.handle_extension("txt", lambda data: data),
+            wds.handle_extension("numpy", lambda data: data),
+        ).map(strip_prefix).to_tuple(*entries))
 
     dataloaderToFlatbin(loader, entries, output, patch_info, overrides)
 
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(
-        description="Convert WebDataset .tar → flat .bin with simplified keys"
-    )
-    p.add_argument("dataset", nargs="+",
+        description="Convert WebDataset .tar → flat .bin with simplified keys")
+    p.add_argument("dataset",
+                   nargs="+",
                    help="One or more .tar archives to read")
-    p.add_argument("--entries", nargs="+", required=True,
-                   help="Which keys to extract, e.g. 0.png 1.png cls metadata.txt")
-    p.add_argument("--output", required=True,
-                   help="Output .bin filename")
-    p.add_argument("--shuffle", type=int, default=20000,
-                   help="WebDataset shuffle buffer (0 to disable)")
-    p.add_argument("--shardshuffle", type=int, default=100,
-                   help="WebDataset shard-shuffle buffer (parsed but not applied)")
-    p.add_argument("--handler_overrides", nargs="*", default=[],
-                   help="Pairs of ext type to override default handlers, e.g. cls stoi")
+    p.add_argument(
+        "--entries",
+        nargs="+",
+        required=True,
+        help="Which keys to extract, e.g. 0.png 1.png cls metadata.txt",
+    )
+    p.add_argument("--output", required=True, help="Output .bin filename")
+    p.add_argument(
+        "--shuffle",
+        type=int,
+        default=20000,
+        help="WebDataset shuffle buffer (0 to disable)",
+    )
+    p.add_argument(
+        "--shardshuffle",
+        type=int,
+        default=100,
+        help="WebDataset shard-shuffle buffer (parsed but not applied)",
+    )
+    p.add_argument(
+        "--handler_overrides",
+        nargs="*",
+        default=[],
+        help="Pairs of ext type to override default handlers, e.g. cls stoi",
+    )
 
     args = p.parse_args()
 
     if len(args.handler_overrides) % 2 != 0:
-        p.error("handler_overrides must be even-length: ext type [ext type ...]")
+        p.error(
+            "handler_overrides must be even-length: ext type [ext type ...]")
 
     overrides = {
-        args.handler_overrides[i]: args.handler_overrides[i+1]
+        args.handler_overrides[i]: args.handler_overrides[i + 1]
         for i in range(0, len(args.handler_overrides), 2)
     }
 
@@ -118,12 +120,12 @@ if __name__ == "__main__":
     if not valid_shards:
         raise RuntimeError("No non-empty tar shards to convert.")
     # replace args.dataset with valid_shards:
-    
+
     convertWebdataset(
         valid_shards,
         args.entries,
         args.output,
         args.shuffle,
         args.shardshuffle,
-        overrides
+        overrides,
     )
