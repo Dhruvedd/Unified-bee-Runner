@@ -15,7 +15,8 @@ from concurrent.futures import ThreadPoolExecutor
 import webdataset as wds
 from PIL import Image
 
-logging.basicConfig(format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
+logging.basicConfig(format="%(asctime)s %(levelname)s %(message)s",
+                    level=logging.INFO)
 
 
 def process_sample(key, png_root, txt_root, frames_per_sample, out_channels):
@@ -100,7 +101,10 @@ def write_to_dataset(
     logging.info(f"Writing {tar_file} from samples in {png_root}")
     tar = wds.TarWriter(tar_file, encoder=False)
     txt_root = png_root.rstrip(os.sep) + "txt"
-    keys = [d for d in os.listdir(png_root) if os.path.isdir(os.path.join(png_root, d))]
+    keys = [
+        d for d in os.listdir(png_root)
+        if os.path.isdir(os.path.join(png_root, d))
+    ]
     logging.info(f"Found {len(keys)} sample folders")
 
     # optional equalization
@@ -127,17 +131,17 @@ def write_to_dataset(
     count = 0
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
         for i in range(0, len(keys), batch_size):
-            batch = keys[i : i + batch_size]
+            batch = keys[i:i + batch_size]
             for key, sample in zip(
-                batch,
-                ex.map(
-                    process_sample,
                     batch,
-                    [png_root] * len(batch),
-                    [txt_root] * len(batch),
-                    [frames_per_sample] * len(batch),
-                    [out_channels] * len(batch),
-                ),
+                    ex.map(
+                        process_sample,
+                        batch,
+                        [png_root] * len(batch),
+                        [txt_root] * len(batch),
+                        [frames_per_sample] * len(batch),
+                        [out_channels] * len(batch),
+                    ),
             ):
                 if sample is None:
                     continue  # truncated/corrupt or error—left on disk

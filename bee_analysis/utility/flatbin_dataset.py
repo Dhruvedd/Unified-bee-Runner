@@ -73,14 +73,18 @@ def img_handler(binfile, img_format=None):
         # Decode the image according to the requested format or return the format as written
         # NOTE Only handling RGB and grayscale (L) images currently.
         if (img_format is None and img.mode == "RGB") or img_format == "RGB":
-            img_data = numpy.array(img.convert("RGB")).astype(numpy.float32) / 255.0
+            img_data = numpy.array(img.convert("RGB")).astype(
+                numpy.float32) / 255.0
         elif (img_format is None and img.mode == "L") or img_format == "L":
-            img_data = numpy.array(img.convert("L")).astype(numpy.float32) / 255.0
+            img_data = numpy.array(img.convert("L")).astype(
+                numpy.float32) / 255.0
         else:
             if img_format is None:
-                raise RuntimeError("Unhandled image format: {}".format(img.mode))
+                raise RuntimeError("Unhandled image format: {}".format(
+                    img.mode))
             else:
-                raise RuntimeError("Unhandled image format: {}".format(img_format))
+                raise RuntimeError(
+                    "Unhandled image format: {}".format(img_format))
     # The image is in height x width x channels, which we don't want.
     # We also always want to return data with a channel, even with grayscale images
     if 3 == img_data.ndim:
@@ -161,7 +165,8 @@ def array_handler_type(typechar, nmemb, binfile):
     if nmemb > 1:
         return struct.unpack(f">{nmemb}{typechar}", binfile.read(size * nmemb))
     else:
-        return struct.unpack(f">{nmemb}{typechar}", binfile.read(size * nmemb))[0]
+        return struct.unpack(f">{nmemb}{typechar}",
+                             binfile.read(size * nmemb))[0]
 
 
 def array_handler_int(nmemb, binfile):
@@ -248,8 +253,7 @@ def write_header(binfile, metadata):
     for name, value in metadata.items():
         name_bytes = name.encode("utf-8")
         header_buf.write(
-            len(name_bytes).to_bytes(length=4, byteorder="big", signed=False)
-        )
+            len(name_bytes).to_bytes(length=4, byteorder="big", signed=False))
         header_buf.write(name_bytes)
         if isinstance(value, float):
             header_buf.write(struct.pack(">?", True))
@@ -262,7 +266,8 @@ def write_header(binfile, metadata):
     # Get the complete header content
     header_content = header_buf.getvalue()
     # Write the total length of the header section, then the header itself
-    binfile.write(len(header_content).to_bytes(length=4, byteorder="big", signed=False))
+    binfile.write(
+        len(header_content).to_bytes(length=4, byteorder="big", signed=False))
     binfile.write(header_content)
 
 
@@ -308,14 +313,16 @@ def dataloaderToFlatbin(dataloader, entries, output, metadata={}, handlers={}):
     binfile = open(output, "wb")
     # Leave a placeholder for the sample count and number of entries
     binfile.write((0).to_bytes(length=4, byteorder="big", signed=False))
-    binfile.write(len(entries).to_bytes(length=4, byteorder="big", signed=False))
+    binfile.write(
+        len(entries).to_bytes(length=4, byteorder="big", signed=False))
 
     # --- Write the data format section of the header ---
     datawriters = []
     for name in entries:
         # Write name
         name_bytes = name.encode("utf-8")
-        binfile.write(len(name_bytes).to_bytes(length=4, byteorder="big", signed=False))
+        binfile.write(
+            len(name_bytes).to_bytes(length=4, byteorder="big", signed=False))
         binfile.write(name_bytes)
 
         # Determine the correct writer function
@@ -326,23 +333,21 @@ def dataloaderToFlatbin(dataloader, entries, output, metadata={}, handlers={}):
             datawriters.append(functools.partial(writeImgData, binfile))
             is_variable_size = True
         elif name.endswith(".numpy") or handle_str == "numpy":
-            datawriters.append(functools.partial(writeNumpyWithHeader, binfile))
+            datawriters.append(functools.partial(writeNumpyWithHeader,
+                                                 binfile))
             is_variable_size = True
         elif name.endswith(".int") or handle_str == "int":
             datawriters.append(functools.partial(writeIntData, binfile))
-            binfile.write(
-                (1).to_bytes(length=4, byteorder="big", signed=False)
-            )  # Size = 1 element
+            binfile.write((1).to_bytes(length=4, byteorder="big",
+                                       signed=False))  # Size = 1 element
         elif name.endswith(".float") or handle_str == "float":
             datawriters.append(functools.partial(writeFloatData, binfile))
-            binfile.write(
-                (1).to_bytes(length=4, byteorder="big", signed=False)
-            )  # Size = 1 element
+            binfile.write((1).to_bytes(length=4, byteorder="big",
+                                       signed=False))  # Size = 1 element
         elif handle_str == "stoi":
             datawriters.append(functools.partial(writeStoIData, binfile))
-            binfile.write(
-                (1).to_bytes(length=4, byteorder="big", signed=False)
-            )  # Size = 1 element
+            binfile.write((1).to_bytes(length=4, byteorder="big",
+                                       signed=False))  # Size = 1 element
         else:
             raise ValueError(
                 f"Unsupported entry type for '{name}'. Please specify a handler."
@@ -351,7 +356,8 @@ def dataloaderToFlatbin(dataloader, entries, output, metadata={}, handlers={}):
         if is_variable_size:
             # For variable size data, write 0 as size placeholder. Not strictly needed for reading
             # but good for consistency.
-            binfile.write((0).to_bytes(length=4, byteorder="big", signed=False))
+            binfile.write((0).to_bytes(length=4, byteorder="big",
+                                       signed=False))
 
     write_header(binfile, metadata)
 
@@ -377,12 +383,14 @@ def dataloaderToFlatbin(dataloader, entries, output, metadata={}, handlers={}):
 
     # Go back to the beginning to write the final sample count
     binfile.seek(0)
-    binfile.write(sample_count.to_bytes(length=4, byteorder="big", signed=False))
+    binfile.write(
+        sample_count.to_bytes(length=4, byteorder="big", signed=False))
     binfile.close()
     print(f"Wrote {sample_count} samples to {output}")
 
 
 class InterleavedFlatbinDatasets(torch.utils.data.IterableDataset):
+
     def __init__(self, binpath, desired_data, img_format=None):
         if not isinstance(binpath, list):
             binpath = [binpath]
@@ -415,8 +423,7 @@ class InterleavedFlatbinDatasets(torch.utils.data.IterableDataset):
         # If the number of items is too small we lose out on some randomness. Enforce a minimum size.
         if self.interleave_order and 10 > len(self.interleave_order):
             self.interleave_order = self.interleave_order * (
-                10 // len(self.interleave_order) + 1
-            )
+                10 // len(self.interleave_order) + 1)
 
         random.shuffle(self.interleave_order)
 
@@ -459,6 +466,7 @@ class InterleavedFlatbinDatasets(torch.utils.data.IterableDataset):
 
 
 class FlatbinDataset(torch.utils.data.IterableDataset):
+
     def __init__(self, binpath, desired_data, img_format=None):
         if isinstance(binpath, list):
             # If a list is provided, just use the first one.
@@ -470,7 +478,8 @@ class FlatbinDataset(torch.utils.data.IterableDataset):
         with open(self.binpath, "rb") as binfile:
             # Read total samples, and if zero, initialize as an empty dataset
             try:
-                self.total_samples = int.from_bytes(binfile.read(4), byteorder="big")
+                self.total_samples = int.from_bytes(binfile.read(4),
+                                                    byteorder="big")
             except (IOError, struct.error):
                 self.total_samples = 0
 
@@ -485,7 +494,8 @@ class FlatbinDataset(torch.utils.data.IterableDataset):
                 self.skip_fns, self.patch_info, self.data_offset = [], {}, 0
                 return
 
-            self.entries_per_sample = int.from_bytes(binfile.read(4), byteorder="big")
+            self.entries_per_sample = int.from_bytes(binfile.read(4),
+                                                     byteorder="big")
             self.desired_data = desired_data
             (
                 self.header_names,
@@ -503,11 +513,8 @@ class FlatbinDataset(torch.utils.data.IterableDataset):
 
                 # All non-image/numpy types have a fixed data length written in the header
                 is_variable_size = name.endswith((".png", ".numpy"))
-                data_length = (
-                    int.from_bytes(binfile.read(4), byteorder="big")
-                    if not is_variable_size
-                    else None
-                )
+                data_length = (int.from_bytes(binfile.read(4), byteorder="big")
+                               if not is_variable_size else None)
 
                 if name not in self.desired_data:
                     self.data_indices.append(None)
@@ -516,30 +523,27 @@ class FlatbinDataset(torch.utils.data.IterableDataset):
                         self.data_handlers.append(skip_image)
                     else:
                         self.data_handlers.append(
-                            functools.partial(skip_tensor, data_length)
-                        )
+                            functools.partial(skip_tensor, data_length))
                 else:
                     idx = self.desired_data.index(name)
                     self.data_indices.append(idx)
 
                     if name.endswith(".png"):
                         self.data_handlers.append(
-                            functools.partial(img_handler, img_format=self.img_format)
-                        )
+                            functools.partial(img_handler,
+                                              img_format=self.img_format))
                     elif name.endswith(".numpy"):
                         self.data_handlers.append(numpy_handler)
                     elif name.endswith(".float"):
                         self.data_handlers.append(
-                            functools.partial(array_handler_float, data_length)
-                        )
+                            functools.partial(array_handler_float,
+                                              data_length))
                     elif name.endswith(".int") or name.endswith("cls"):
                         self.data_handlers.append(
-                            functools.partial(array_handler_int, data_length)
-                        )
+                            functools.partial(array_handler_int, data_length))
                     else:  # Fallback for other fixed-size tensor-like data
                         self.data_handlers.append(
-                            functools.partial(tensor_handler, data_length)
-                        )
+                            functools.partial(tensor_handler, data_length))
 
                 self.data_sizes.append(data_length)
 

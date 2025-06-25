@@ -35,7 +35,7 @@ def strip_prefix(sample):
         if full_name in out:
             continue
         if full_name.startswith(prefix):
-            suffix = full_name[len(prefix) :]
+            suffix = full_name[len(prefix):]
         else:
             suffix = full_name.lstrip(".")
         out[suffix] = data
@@ -54,32 +54,30 @@ def getImageInfo(tar_list):
     }
 
 
-def convertWebdataset(dataset, entries, output, shuffle, shardshuffle, overrides):
+def convertWebdataset(dataset, entries, output, shuffle, shardshuffle,
+                      overrides):
     patch_info = {}
 
     # Build pipeline: use single-arg handlers because this WebDataset version
     loader = (
-        wds.WebDataset(dataset)
-        .shuffle(shuffle)
+        wds.WebDataset(dataset).shuffle(shuffle)
         # .shardshuffle(shardshuffle)  # unsupported
         .decode(
             wds.handle_extension("cls", lambda data: data),
             wds.handle_extension("png", lambda data: data),
             wds.handle_extension("txt", lambda data: data),
             wds.handle_extension("numpy", lambda data: data),
-        )
-        .map(strip_prefix)
-        .to_tuple(*entries)
-    )
+        ).map(strip_prefix).to_tuple(*entries))
 
     dataloaderToFlatbin(loader, entries, output, patch_info, overrides)
 
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(
-        description="Convert WebDataset .tar → flat .bin with simplified keys"
-    )
-    p.add_argument("dataset", nargs="+", help="One or more .tar archives to read")
+        description="Convert WebDataset .tar → flat .bin with simplified keys")
+    p.add_argument("dataset",
+                   nargs="+",
+                   help="One or more .tar archives to read")
     p.add_argument(
         "--entries",
         nargs="+",
@@ -109,7 +107,8 @@ if __name__ == "__main__":
     args = p.parse_args()
 
     if len(args.handler_overrides) % 2 != 0:
-        p.error("handler_overrides must be even-length: ext type [ext type ...]")
+        p.error(
+            "handler_overrides must be even-length: ext type [ext type ...]")
 
     overrides = {
         args.handler_overrides[i]: args.handler_overrides[i + 1]
