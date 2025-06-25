@@ -5,6 +5,11 @@ This script strips the long "<key>.0.png" names down to "0.png", "1.png", ...
 then packages them via dataloaderToFlatbin().
 """
 
+from flatbin_dataset import (
+    dataloaderToFlatbin,
+    getPatchHeaderNames,
+    getPatchDatatypes
+)
 import argparse
 import webdataset as wds
 import torch
@@ -12,19 +17,8 @@ import sys
 import os
 
 # adjust this to wherever your flatbin_dataset lives
-sys.path.append("/research/projects/grail/ajs787/target/2025-06-06_2025-06-09/Unified-bee-Runner/bee-analysis/utility")
-
-from flatbin_dataset import (
-    dataloaderToFlatbin,
-    getPatchHeaderNames,
-    getPatchDatatypes
-)
-
-from flatbin_dataset import (
-    dataloaderToFlatbin,
-    getPatchHeaderNames,
-    getPatchDatatypes
-)
+sys.path.append(
+    "/research/projects/grail/ajs787/target/2025-06-06_2025-06-09/Unified-bee-Runner/bee-analysis/utility")
 
 
 def strip_prefix(sample):
@@ -71,16 +65,16 @@ def convertWebdataset(dataset, entries, output, shuffle, shardshuffle, overrides
     # Build pipeline: use single-arg handlers because this WebDataset version
     loader = (
         wds.WebDataset(dataset)
-           .shuffle(shuffle)
-           # .shardshuffle(shardshuffle)  # unsupported
-           .decode(
-               wds.handle_extension("cls",   lambda data: data),
-               wds.handle_extension("png",   lambda data: data),
-               wds.handle_extension("txt",   lambda data: data),
-               wds.handle_extension("numpy", lambda data: data),
-           )
-           .map(strip_prefix)
-           .to_tuple(*entries)
+        .shuffle(shuffle)
+        # .shardshuffle(shardshuffle)  # unsupported
+        .decode(
+            wds.handle_extension("cls", lambda data: data),
+            wds.handle_extension("png", lambda data: data),
+            wds.handle_extension("txt", lambda data: data),
+            wds.handle_extension("numpy", lambda data: data),
+        )
+        .map(strip_prefix)
+        .to_tuple(*entries)
     )
 
     dataloaderToFlatbin(loader, entries, output, patch_info, overrides)
@@ -106,7 +100,8 @@ if __name__ == "__main__":
     args = p.parse_args()
 
     if len(args.handler_overrides) % 2 != 0:
-        p.error("handler_overrides must be even-length: ext type [ext type ...]")
+        p.error(
+            "handler_overrides must be even-length: ext type [ext type ...]")
 
     overrides = {
         args.handler_overrides[i]: args.handler_overrides[i+1]
@@ -118,7 +113,7 @@ if __name__ == "__main__":
     if not valid_shards:
         raise RuntimeError("No non-empty tar shards to convert.")
     # replace args.dataset with valid_shards:
-    
+
     convertWebdataset(
         valid_shards,
         args.entries,

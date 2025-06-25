@@ -20,6 +20,7 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO
 )
 
+
 def process_sample(key, png_root, txt_root, frames_per_sample, out_channels):
     """
     Reads one sample "<key>/" + "<key>.txt" and returns a WebDataset sample dict,
@@ -46,7 +47,8 @@ def process_sample(key, png_root, txt_root, frames_per_sample, out_channels):
             img = Image.open(io.BytesIO(data))
             img.verify()
         except Exception as e:
-            logging.error(f"Truncated/corrupt image detected: {path} ({e}); dropping sample {key}")
+            logging.error(
+                f"Truncated/corrupt image detected: {path} ({e}); dropping sample {key}")
             return None
 
     # build the sample dict
@@ -128,7 +130,7 @@ def write_to_dataset(
     count = 0
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
         for i in range(0, len(keys), batch_size):
-            batch = keys[i : i + batch_size]
+            batch = keys[i: i + batch_size]
             for key, sample in zip(
                 batch,
                 ex.map(
@@ -158,7 +160,8 @@ def write_to_dataset(
                     logging.info(f"  wrote {count} samples…")
 
     tar.close()
-    logging.info(f"Finished writing {count}/{len(keys)} samples in {time.time()-start:.1f}s")
+    logging.info(
+        f"Finished writing {count}/{len(keys)} samples in {time.time()-start:.1f}s")
 
     with open(os.path.join(dataset_path, "RUN_DESCRIPTION.log"), "a+") as rd:
         rd.write(f"{count} samples → {tar_file}\n")
