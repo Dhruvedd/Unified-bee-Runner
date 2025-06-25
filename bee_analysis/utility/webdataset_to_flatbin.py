@@ -4,15 +4,15 @@ Convert one or more WebDataset .tar files into flat .bin files.
 This script strips the long "<key>.0.png" names down to "0.png", "1.png", ...
 then packages them via dataloaderToFlatbin().
 """
-
 import argparse
 import os
 import sys
 
 import torch
 import webdataset as wds
-from flatbin_dataset import (dataloaderToFlatbin, getPatchDatatypes,
-                             getPatchHeaderNames)
+from flatbin_dataset import dataloaderToFlatbin
+from flatbin_dataset import getPatchDatatypes
+from flatbin_dataset import getPatchHeaderNames
 
 # adjust this to wherever your flatbin_dataset lives
 sys.path.append(

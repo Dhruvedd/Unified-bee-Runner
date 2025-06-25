@@ -5,7 +5,6 @@ WriteToDataset.py
 Writes valid samples into a WebDataset .tar, but preserves any truncated
 or corrupted samples on disk for later debugging.
 """
-
 import io
 import logging
 import os

@@ -1,9 +1,7 @@
 #! /usr/bin/python3
-
 """
 Dataset that loads flatbinary files.
 """
-
 import functools
 import io
 import os
