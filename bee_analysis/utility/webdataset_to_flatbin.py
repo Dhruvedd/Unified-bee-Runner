@@ -5,11 +5,7 @@ This script strips the long "<key>.0.png" names down to "0.png", "1.png", ...
 then packages them via dataloaderToFlatbin().
 """
 
-from flatbin_dataset import (
-    dataloaderToFlatbin,
-    getPatchHeaderNames,
-    getPatchDatatypes
-)
+from flatbin_dataset import dataloaderToFlatbin, getPatchHeaderNames, getPatchDatatypes
 import argparse
 import webdataset as wds
 import torch
@@ -18,7 +14,8 @@ import os
 
 # adjust this to wherever your flatbin_dataset lives
 sys.path.append(
-    "/research/projects/grail/ajs787/target/2025-06-06_2025-06-09/Unified-bee-Runner/bee-analysis/utility")
+    "/research/projects/grail/ajs787/target/2025-06-06_2025-06-09/Unified-bee-Runner/bee-analysis/utility"
+)
 
 
 def strip_prefix(sample):
@@ -36,7 +33,7 @@ def strip_prefix(sample):
         if full_name in out:
             continue
         if full_name.startswith(prefix):
-            suffix = full_name[len(prefix):]
+            suffix = full_name[len(prefix) :]
         else:
             suffix = full_name.lstrip(".")
         out[suffix] = data
@@ -46,11 +43,7 @@ def strip_prefix(sample):
 
 def getImageInfo(tar_list):
     image_info = getPatchHeaderNames()
-    ds = (
-        wds.WebDataset(tar_list)
-           .map(strip_prefix)
-           .to_tuple(*image_info)
-    )
+    ds = wds.WebDataset(tar_list).map(strip_prefix).to_tuple(*image_info)
     example = next(iter(ds))
     datatypes = getPatchDatatypes()
     return {
@@ -84,27 +77,40 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser(
         description="Convert WebDataset .tar → flat .bin with simplified keys"
     )
-    p.add_argument("dataset", nargs="+",
-                   help="One or more .tar archives to read")
-    p.add_argument("--entries", nargs="+", required=True,
-                   help="Which keys to extract, e.g. 0.png 1.png cls metadata.txt")
-    p.add_argument("--output", required=True,
-                   help="Output .bin filename")
-    p.add_argument("--shuffle", type=int, default=20000,
-                   help="WebDataset shuffle buffer (0 to disable)")
-    p.add_argument("--shardshuffle", type=int, default=100,
-                   help="WebDataset shard-shuffle buffer (parsed but not applied)")
-    p.add_argument("--handler_overrides", nargs="*", default=[],
-                   help="Pairs of ext type to override default handlers, e.g. cls stoi")
+    p.add_argument("dataset", nargs="+", help="One or more .tar archives to read")
+    p.add_argument(
+        "--entries",
+        nargs="+",
+        required=True,
+        help="Which keys to extract, e.g. 0.png 1.png cls metadata.txt",
+    )
+    p.add_argument("--output", required=True, help="Output .bin filename")
+    p.add_argument(
+        "--shuffle",
+        type=int,
+        default=20000,
+        help="WebDataset shuffle buffer (0 to disable)",
+    )
+    p.add_argument(
+        "--shardshuffle",
+        type=int,
+        default=100,
+        help="WebDataset shard-shuffle buffer (parsed but not applied)",
+    )
+    p.add_argument(
+        "--handler_overrides",
+        nargs="*",
+        default=[],
+        help="Pairs of ext type to override default handlers, e.g. cls stoi",
+    )
 
     args = p.parse_args()
 
     if len(args.handler_overrides) % 2 != 0:
-        p.error(
-            "handler_overrides must be even-length: ext type [ext type ...]")
+        p.error("handler_overrides must be even-length: ext type [ext type ...]")
 
     overrides = {
-        args.handler_overrides[i]: args.handler_overrides[i+1]
+        args.handler_overrides[i]: args.handler_overrides[i + 1]
         for i in range(0, len(args.handler_overrides), 2)
     }
 
@@ -120,5 +126,5 @@ if __name__ == "__main__":
         args.output,
         args.shuffle,
         args.shardshuffle,
-        overrides
+        overrides,
     )

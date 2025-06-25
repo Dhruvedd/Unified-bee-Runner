@@ -16,9 +16,7 @@ from concurrent.futures import ThreadPoolExecutor
 import webdataset as wds
 from PIL import Image
 
-logging.basicConfig(
-    format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO
-)
+logging.basicConfig(format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
 
 
 def process_sample(key, png_root, txt_root, frames_per_sample, out_channels):
@@ -48,7 +46,8 @@ def process_sample(key, png_root, txt_root, frames_per_sample, out_channels):
             img.verify()
         except Exception as e:
             logging.error(
-                f"Truncated/corrupt image detected: {path} ({e}); dropping sample {key}")
+                f"Truncated/corrupt image detected: {path} ({e}); dropping sample {key}"
+            )
             return None
 
     # build the sample dict
@@ -102,8 +101,7 @@ def write_to_dataset(
     logging.info(f"Writing {tar_file} from samples in {png_root}")
     tar = wds.TarWriter(tar_file, encoder=False)
     txt_root = png_root.rstrip(os.sep) + "txt"
-    keys = [d for d in os.listdir(png_root)
-            if os.path.isdir(os.path.join(png_root, d))]
+    keys = [d for d in os.listdir(png_root) if os.path.isdir(os.path.join(png_root, d))]
     logging.info(f"Found {len(keys)} sample folders")
 
     # optional equalization
@@ -130,7 +128,7 @@ def write_to_dataset(
     count = 0
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
         for i in range(0, len(keys), batch_size):
-            batch = keys[i: i + batch_size]
+            batch = keys[i : i + batch_size]
             for key, sample in zip(
                 batch,
                 ex.map(
@@ -161,7 +159,8 @@ def write_to_dataset(
 
     tar.close()
     logging.info(
-        f"Finished writing {count}/{len(keys)} samples in {time.time()-start:.1f}s")
+        f"Finished writing {count}/{len(keys)} samples in {time.time()-start:.1f}s"
+    )
 
     with open(os.path.join(dataset_path, "RUN_DESCRIPTION.log"), "a+") as rd:
         rd.write(f"{count} samples → {tar_file}\n")
@@ -169,6 +168,7 @@ def write_to_dataset(
 
 if __name__ == "__main__":
     import argparse
+
     p = argparse.ArgumentParser()
     p.add_argument("png_root")
     p.add_argument("tar_file")
