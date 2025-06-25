@@ -17,7 +17,7 @@ for m in "${submodules[@]}"; do
   echo "=== Converting $m … ==="
 
   # 1) Snapshot the current files
-  cp -r "$m" "${m}.tmp"
+  cp -r "$m" "$m.tmp"
 
   # 2) Unregister as submodule (metadata stays in .git until we remove it)
   git submodule deinit -f -- "$m"
@@ -35,7 +35,7 @@ for m in "${submodules[@]}"; do
   rm -rf "$m"
 
   # 7) Restore your real files
-  mv "${m}.tmp" "$m"
+  mv "$m.tmp" "$m"
 
   # 8) Stage the new directory and updated .gitmodules
   git add "$m" .gitmodules
