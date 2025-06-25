@@ -6,11 +6,11 @@ Writes valid samples into a WebDataset .tar, but preserves any truncated
 or corrupted samples on disk for later debugging.
 """
 
-import os
 import io
-import time
 import logging
+import os
 import shutil
+import time
 from concurrent.futures import ThreadPoolExecutor
 
 import webdataset as wds

@@ -5,12 +5,14 @@ This script strips the long "<key>.0.png" names down to "0.png", "1.png", ...
 then packages them via dataloaderToFlatbin().
 """
 
-from flatbin_dataset import dataloaderToFlatbin, getPatchHeaderNames, getPatchDatatypes
 import argparse
-import webdataset as wds
-import torch
-import sys
 import os
+import sys
+
+import torch
+import webdataset as wds
+from flatbin_dataset import (dataloaderToFlatbin, getPatchDatatypes,
+                             getPatchHeaderNames)
 
 # adjust this to wherever your flatbin_dataset lives
 sys.path.append(

@@ -4,14 +4,14 @@
 Dataset that loads flatbinary files.
 """
 
-import io
 import functools
-import numpy
+import io
 import os
 import random
 import struct
-import torch
 
+import numpy
+import torch
 from PIL import Image
 
 
